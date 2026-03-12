@@ -24,7 +24,7 @@ namespace Xasu.Util
 
         public static bool IsPartial(this Statement statement)
         {
-            if(_partialStatements == null)
+            if (_partialStatements == null)
             {
                 _partialStatements = new HashSet<Statement>();
             }

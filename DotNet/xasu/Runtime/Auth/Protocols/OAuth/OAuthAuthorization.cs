@@ -2,7 +2,7 @@
 
 namespace Xasu.Auth.Protocols.OAuth
 {
-    internal class OAuthAuthorization
+    public class OAuthAuthorization
     {
         [JsonProperty("oauth_token")]
         public string OAuthToken { get; set; }

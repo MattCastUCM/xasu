@@ -3,7 +3,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Polly;
 using TinCan;
-using UnityEngine.Auth.Protocols.Cmi5;
+using Xasu.Cmi5.Auth.Cmi5;
 using Xasu.CMI5;
 using Xasu.Exceptions;
 using Xasu.Requests;
@@ -35,7 +35,7 @@ namespace Xasu.Auth.Protocols
 
         private async Task<Cmi5Fetch> DoFetch(System.Uri fetchUrl, IAsyncPolicy policy)
         {
-            var request = new MyHttpRequest
+            var request = new HttpRequest
             {
                 url = fetchUrl.ToString(),
                 method = "POST"
@@ -45,12 +45,12 @@ namespace Xasu.Auth.Protocols
             return DeserializeFromResponse<Cmi5Fetch>(response);
         }
 
-        private static T DeserializeFromResponse<T>(MyHttpResponse response)
+        private static T DeserializeFromResponse<T>(HttpResponse response)
         {
             return Newtonsoft.Json.JsonConvert.DeserializeObject<T>(Encoding.UTF8.GetString(response.content));
         }
 
-        public Task UpdateParamsForAuth(MyHttpRequest request)
+        public Task UpdateParamsForAuth(HttpRequest request)
         {
             request.headers.Add("Authorization", string.Format("Basic {0}", auth.AuthToken));
             return Task.FromResult(0);

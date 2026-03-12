@@ -2,16 +2,12 @@
 using System;
 using System.Collections.Generic;
 using TinCan;
+using Xasu.Util;
 
 namespace Xasu.HighLevel
 {
-    public abstract class AbstractHighLevelTracker<T> : IHighLevelTracker where T : class, new()
+    public abstract class AbstractHighLevelTracker<T> : Singleton<T> where T : class, new()
     {
-        protected static T instance;
-        public static T Instance { get { return instance ?? (instance = new T()); } }
-
-        public XasuTracker Tracker { get; set; }
-
         protected abstract Dictionary<Enum, string> VerbIds { get; }
         protected abstract Dictionary<Enum, string> TypeIds { get; }
         protected abstract Dictionary<Enum, string> ExtensionIds { get; }
@@ -24,7 +20,7 @@ namespace Xasu.HighLevel
 
         protected Verb GetVerb(Enum verb)
         {
-            var verbDisplay = verb.ToString().ToLower();
+            string verbDisplay = verb.ToString().ToLower();
             return new Verb
             {
                 id = new Uri(VerbIds[verb]),
@@ -39,7 +35,7 @@ namespace Xasu.HighLevel
         {
             if (!Uri.IsWellFormedUriString(id, UriKind.Absolute))
             {
-                id = XasuTracker.Instance.DefaultIdPrefix + id;
+                id = XasuTracker.DefaultIdPrefix + id;
             }
 
             return new Activity
@@ -62,12 +58,12 @@ namespace Xasu.HighLevel
 
         protected TinCan.Extensions GetExtensions(Dictionary<Enum, object> extensions)
         {
-            var jobject = new JObject();
+            JObject jobject = new JObject();
             foreach (var ex in extensions)
             {
                 jobject.Add(ExtensionIds[ex.Key], JToken.FromObject(ex.Value));
             }
-            
+
             return new TinCan.Extensions(jobject);
         }
 
@@ -83,10 +79,9 @@ namespace Xasu.HighLevel
             return context;
         }
 
-        protected static StatementPromise Enqueue(Statement statement)
+        protected virtual StatementPromise Enqueue(Statement statement)
         {
-            return new StatementPromise(statement, XasuTracker.Instance.Enqueue(statement));
+            return new StatementPromise(statement, XasuTracker.Enqueue(statement));
         }
-
     }
 }

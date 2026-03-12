@@ -3,7 +3,6 @@ using Polly;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using UnityEngine;
 using Xasu.Auth.Utils;
 using System.Threading;
 using Xasu.Util;
@@ -17,43 +16,43 @@ namespace Xasu.Auth.Protocols
 {
     public class OAuthProtocol : IAuthProtocol
     {
-        private readonly string fieldMissingMessage = "Field \"{0}\" required for \"OAuth 1.0a\" authentication is missing!";
-        private readonly string requestNullMessage = "Param \"headerParams\" required for \"OAuth 1.0a\" authentication is null!";
+        protected readonly string fieldMissingMessage = "Field \"{0}\" required for \"OAuth 1.0a\" authentication is missing!";
+        protected readonly string requestNullMessage = "Param \"headerParams\" required for \"OAuth 1.0a\" authentication is null!";
 
         // Standard fields
-        private readonly string consumerKeyField = "oauth_consumer_key";
-        private readonly string consumerSecretField = "oauth_consumer_secret";
-        private readonly string signatureMethodField = "oauth_signature_method";
-        //private readonly string signatureField = "oauth_signature";
-        //private readonly string timestampField = "oauth_timestamp";
-        //private readonly string callbackField = "oauth_callback";
+        protected readonly string consumerKeyField = "oauth_consumer_key";
+        protected readonly string consumerSecretField = "oauth_consumer_secret";
+        protected readonly string signatureMethodField = "oauth_signature_method";
+        //protected readonly string signatureField = "oauth_signature";
+        //protected readonly string timestampField = "oauth_timestamp";
+        //protected readonly string callbackField = "oauth_callback";
 
         // Custom fields
-        private readonly string requestTokenEndpointField = "request_token_endpoint"; // AKA "initiate" endpoint
-        private readonly string authorizeEndpointField = "authorize_endpoint";
-        private readonly string accessTokenEndpointField = "access_token_endpoint";
-        private readonly string homePageField = "homepage";
+        protected readonly string requestTokenEndpointField = "request_token_endpoint"; // AKA "initiate" endpoint
+        protected readonly string authorizeEndpointField = "authorize_endpoint";
+        protected readonly string accessTokenEndpointField = "access_token_endpoint";
+        protected readonly string homePageField = "homepage";
 
         // Bearer
-        private string consumerKey;
-        private string consumerSecret;
-        private SignatureTypes signatureMethod;
-        private string requestTokenEndpoint;
-        private string authorizeEndpoint;
-        private string accessTokenEndpoint;
-        private OAuthAuthorization token;
+        protected string consumerKey;
+        protected string consumerSecret;
+        protected SignatureTypes signatureMethod;
+        protected string requestTokenEndpoint;
+        protected string authorizeEndpoint;
+        protected string accessTokenEndpoint;
+        protected OAuthAuthorization token;
 
         public IAsyncPolicy Policy { get; set; }
 
         public IHttpRequestHandler RequestHandler { get; set; }
 
-        public Agent Agent { get; private set; }
+        public Agent Agent { get; protected set; }
 
         public AuthState State { get; protected set; }
 
         public string ErrorMessage { get; protected set; }
 
-        public async Task Init(IDictionary<string, string> config)
+        public virtual async Task Init(IDictionary<string, string> config)
         {
             // Main params
             consumerKey = config.GetRequiredValue(consumerKeyField, fieldMissingMessage);
@@ -73,7 +72,7 @@ namespace Xasu.Auth.Protocols
             authorizeEndpoint = config.Value(authorizeEndpointField);
             accessTokenEndpoint = config.Value(accessTokenEndpointField);
 
-            var port = UnityEngine.Random.Range(25525, 65535);
+            var port = RandomHelper.Next(25525, 65535);
             var cancelationToken = new CancellationToken();
 
             try
@@ -94,17 +93,19 @@ namespace Xasu.Auth.Protocols
                 var doAccessTokenRequest = await DoAccessTokenRequest(accessTokenEndpoint, consumerKey, authorizeResponse);
 
                 var homePage = authorizeEndpoint.Replace((new Uri(authorizeEndpoint)).AbsolutePath, "");
-                if (config.ContainsKey(homePageField)) {
+                if (config.ContainsKey(homePageField))
+                {
                     homePage = config.Value(homePageField);
                 }
                 Agent = new Agent
                 {
-                    account = new AgentAccount {
+                    account = new AgentAccount
+                    {
                         homePage = homePage,
                         name = doAccessTokenRequest.OAuthToken
                     }
                 };
-            } 
+            }
             catch (NetworkException nex)
             {
                 State = AuthState.Errored;
@@ -117,54 +118,44 @@ namespace Xasu.Auth.Protocols
             }
         }
 
-        private async Task<TemporaryAuthorization> DoTokenRequest(string requestTokenEndpoint, string consumerKey, string callbackUrl)
+        protected virtual async Task<TemporaryAuthorization> DoTokenRequest(string requestTokenEndpoint, string consumerKey, string callbackUrl)
         {
-            var request = new MyHttpRequest { url = requestTokenEndpoint, method = "POST" };
+            var request = new HttpRequest { url = requestTokenEndpoint, method = "POST" };
             request.policy = Policy;
             request.form = new Dictionary<string, string>()
             {
                 { "oauth_consumer_key", consumerKey },
-#if UNITY_WEBGL && !UNITY_EDITOR
-                { "oauth_callback", WebGLUtility.GetUrl() }, // Returns to itself
-#else
-                { "oauth_callback", callbackUrl } // We listen for the code
-#endif
+                { "oauth_callback", callbackUrl }       // We listen for the code
             };
 
             var response = await RequestHandler.SendRequest(request);
             return DeserializeFromResponse<TemporaryAuthorization>(response);
         }
 
-        private async Task<AuthorizeResponse> DoAuthorizeRequest(string authorizeEndpoint, TemporaryAuthorization tempAuth, OAuthListener listener)
+        protected virtual async Task<AuthorizeResponse> DoAuthorizeRequest(string authorizeEndpoint, TemporaryAuthorization tempAuth, OAuthListener listener)
         {
             var url = RequestHandler.AppendParamsToExistingQueryString(authorizeEndpoint, new Dictionary<string, string>()
             {
                 { "oauth_token", tempAuth.OAuthToken }
             });
 
-#if !UNITY_WEBGL || UNITY_EDITOR
             AuthorizeResponse authorizeResponse = null;
             listener.onAuthorizeResponse += (auth) =>
             {
                 authorizeResponse = auth;
             };
-#endif
-            AuthUtility.OpenUrl(url);
+            ApplicationSettings.OpenURL(url);
 
-#if !UNITY_WEBGL || UNITY_EDITOR
             while (authorizeResponse == null)
             {
                 await Task.Yield();
             }
             return authorizeResponse;
-#else
-            return null;
-#endif
         }
 
-        private async Task<OAuthAuthorization> DoAccessTokenRequest(string accessTokenEndpoint, string consumerKey, AuthorizeResponse authorizeResponse)
+        protected virtual async Task<OAuthAuthorization> DoAccessTokenRequest(string accessTokenEndpoint, string consumerKey, AuthorizeResponse authorizeResponse)
         {
-            var request = new MyHttpRequest { url = accessTokenEndpoint, method = "POST" };
+            var request = new HttpRequest { url = accessTokenEndpoint, method = "POST" };
             request.policy = Policy;
             request.form = new Dictionary<string, string>()
             {
@@ -177,12 +168,12 @@ namespace Xasu.Auth.Protocols
             return DeserializeFromResponse<OAuthAuthorization>(response);
         }
 
-        private static T DeserializeFromResponse<T>(MyHttpResponse response)
+        protected static T DeserializeFromResponse<T>(HttpResponse response)
         {
             return Newtonsoft.Json.JsonConvert.DeserializeObject<T>(Encoding.UTF8.GetString(response.content));
         }
 
-        public Task UpdateParamsForAuth(MyHttpRequest request)
+        public virtual Task UpdateParamsForAuth(HttpRequest request)
         {
             if (request == null)
             {
@@ -206,13 +197,13 @@ namespace Xasu.Auth.Protocols
             return Task.FromResult(0);
         }
 
-        public void Unauthorized(APIException apiException)
+        public virtual void Unauthorized(APIException apiException)
         {
             State = AuthState.RequiresInteraction;
             ErrorMessage = "The authorization is invalid or has expired. Please Log in again!";
         }
 
-        public void Forbidden(APIException apiException)
+        public virtual void Forbidden(APIException apiException)
         {
             State = AuthState.RequiresInteraction;
             ErrorMessage = "The current authorization has insufficient permissions for one required action. Please Log in again!";

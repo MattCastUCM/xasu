@@ -1,55 +1,25 @@
-﻿using Newtonsoft.Json.Linq;
-using Polly;
-using System;
+﻿using Polly;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Xasu.Auth.Protocols;
-using Xasu.Exceptions;
 using Xasu.Requests;
+using Xasu.Util;
 
 namespace Xasu.Auth
 {
     /// <summary>
     /// Auth Manager manages the available authorization protocols and their initialization and continuation.
     /// </summary>
-    public static class AuthFactory
+    public class AuthFactory : Delegate<IAuthFactory, BaseAuthFactory>
     {
-        private const string notSupportedAuthMessage = "Authorization type \"{0}\" not supported. Accepted types: basic, oauth and oauth2.";
-
-        private static Dictionary<string, IAuthProtocol> authProtocols = new Dictionary<string, IAuthProtocol>()
+        static AuthFactory()
         {
-            { "basic", new BasicProtocol() },
-            { "oauth", new OAuthProtocol() },
-            { "oauth2", new OAuth2Protocol() },
-            { "cmi5", new Cmi5Protocol() }
-        };
+            InitInstance(Factories.Id.AUTH_FACTORY);
+        }
 
         public static async Task<IAuthProtocol> InitAuth(string authName, IDictionary<string, string> parameters, IHttpRequestHandler requestHandler = null, IAsyncPolicy policy = null)
         {
-            if (authName == null || authName == "none" || authName == "disabled")
-            {
-                return null;
-            }
-
-            if (!authProtocols.ContainsKey(authName))
-            {
-                throw new NotSupportedException(string.Format(notSupportedAuthMessage, authName));
-            }
-
-            if (requestHandler != null)
-            {
-                authProtocols[authName].RequestHandler = requestHandler;
-            }
-            
-            if (policy != null)
-            {
-                authProtocols[authName].Policy = policy;
-            }
-
-            await authProtocols[authName].Init(parameters);
-
-            return authProtocols[authName];
+            return await _instance.InitAuth(authName, parameters, requestHandler, policy);
         }
-
     }
 }

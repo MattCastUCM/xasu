@@ -17,6 +17,6 @@ namespace Xasu.Auth.Protocols
         IAsyncPolicy Policy { get; set; }
         IHttpRequestHandler RequestHandler { get; set; }
         Task Init(IDictionary<string, string> config);
-        Task UpdateParamsForAuth(MyHttpRequest request);
+        Task UpdateParamsForAuth(HttpRequest request);
     }
 }

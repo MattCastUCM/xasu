@@ -8,7 +8,6 @@ using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using TinCan;
-using UnityEngine;
 using Xasu.Auth.Protocols;
 using Xasu.Exceptions;
 using Xasu.Requests;
@@ -32,7 +31,6 @@ namespace Xasu.Processors
         private readonly string failedTracesFile;
         private readonly string fallbackTmpFile;
         private readonly IHttpRequestHandler requestHandler;
-
         private int currentBatchSize;
         protected IAsyncLRS lrs;
         private bool hasFallbackTraces;
@@ -50,8 +48,10 @@ namespace Xasu.Processors
         public OnlineProcessor(string lrsEndpoint, TCAPIVersion version, int batchSize, IAuthProtocol authProtocol, IHttpRequestHandler requestHandler,
             bool fallback) : base("fallback.log", Config.TraceFormats.XAPI, version, true)
         {
-            failedTracesFile = Application.persistentDataPath + "/failed_traces.log";
-            fallbackTmpFile = Application.temporaryCachePath + "/fallback.tmp";
+            // TODO: Test
+            failedTracesFile = ApplicationSettings.PersistentDataPath + "/failed_traces.log";
+            fallbackTmpFile = ApplicationSettings.TemporaryCachePath + "/fallback.tmp";
+
             lastTraceTasks = new List<TraceTask>();
             lastStatements = new List<Statement>();
             this.lrsEndpoint = lrsEndpoint;
@@ -63,10 +63,10 @@ namespace Xasu.Processors
 
         public override async Task Init()
         {
-            trackerProcessingTime = XasuTracker.Instance.processingLoopTime;
+            trackerProcessingTime = XasuTracker.ProcessingLoopTime;
 
             // Init Auth
-            this.lrs = new UnityLRS(lrsEndpoint)
+            this.lrs = new BaseLRS(lrsEndpoint)
             {
                 auth = authProtocol,
                 policy = ConfigureLRSPolicy(),
@@ -111,8 +111,9 @@ namespace Xasu.Processors
                         if (response.success)
                         {
                             // Enlarge batch size until we reach the maximum size
-                            currentBatchSize = Mathf.Min(batchSize, currentBatchSize * 2);
-                            XasuTracker.Instance.processingLoopTime = Mathf.Min(trackerProcessingTime, XasuTracker.Instance.processingLoopTime * 2f);
+                            // TODO: Test
+                            currentBatchSize = Math.Min(batchSize, currentBatchSize * 2);
+                            XasuTracker.ProcessingLoopTime = Math.Min(trackerProcessingTime, XasuTracker.ProcessingLoopTime * 2f);
 
                             if (hasFallbackTraces)
                             {
@@ -147,9 +148,10 @@ namespace Xasu.Processors
                                     }
                                     else
                                     {
-                                        XasuTracker.Instance.LogError("[TRACKER: Online Processor] Failed to submit traces. Reducing flush size. Error: " + response.errMsg);
-                                        currentBatchSize = Mathf.Max(1, currentBatchSize / 2);
-                                        XasuTracker.Instance.processingLoopTime = Mathf.Max(minTrackerProcessingTime, XasuTracker.Instance.processingLoopTime / 2f);
+                                        XasuTracker.LogError("[TRACKER: Online Processor] Failed to submit traces. Reducing flush size. Error: " + response.errMsg);
+                                        // TODO: Test
+                                        currentBatchSize = Math.Max(1, currentBatchSize / 2);
+                                        XasuTracker.ProcessingLoopTime = Math.Max(minTrackerProcessingTime, XasuTracker.ProcessingLoopTime / 2f);
                                     }
                                     apiCircuitBreaker.Reset();
                                     break;
@@ -166,22 +168,22 @@ namespace Xasu.Processors
                                     authProtocol?.Forbidden(apiEx);
                                     break;
                                 default:
-                                    XasuTracker.Instance.LogError("[TRACKER: Online Processor] Failed to submit traces with API (" + apiEx.HttpCode + ") response: " + response.errMsg);
+                                    XasuTracker.LogError("[TRACKER: Online Processor] Failed to submit traces with API (" + apiEx.HttpCode + ") response: " + response.errMsg);
                                     break;
                             }
                         }
                         else
                         {
-                            XasuTracker.Instance.LogError("[TRACKER: Online Processor] Failed to submit traces with response: " + response.errMsg);
+                            XasuTracker.LogError("[TRACKER: Online Processor] Failed to submit traces with response: " + response.errMsg);
                         }
                     }
                     catch (NetworkException networkException)
                     {
-                        XasuTracker.Instance.LogError("[TRACKER: Online Processor] Network failed: " + networkException.Message);
+                        XasuTracker.LogError("[TRACKER: Online Processor] Network failed: " + networkException.Message);
                     }
                     catch (BrokenCircuitException)
                     {
-                        XasuTracker.Instance.LogWarning("The tracker tried to send traces while the circuit was open, generating an exception. Resetting the circuit...");
+                        XasuTracker.LogWarning("The tracker tried to send traces while the circuit was open, generating an exception. Resetting the circuit...");
                         networkCircuitBreaker.Reset();
                         apiCircuitBreaker.Reset();
                     }
@@ -244,15 +246,12 @@ namespace Xasu.Processors
         {
             // Retry policy handles both connection and API exceptions
             var retryDelay = Backoff.DecorrelatedJitterBackoffV2(medianFirstRetryDelay: TimeSpan.FromSeconds(1), retryCount: 5);
-            var retryPolicy = Policy
-                .Handle<APIException>(apiEx => 
-                    apiEx.HttpCode >= HttpStatus.InternalServerError ||
-                    apiEx.HttpCode == HttpStatus.PreconditionFailed ||
-                    apiEx.HttpCode == HttpStatus.TooManyRequests
-                  )
-                  .Or<NetworkException>()
-                  .UnityWaitAndRetryAsync(retryDelay);
-
+            var retryPolicy = Policy.Handle<APIException>(apiEx =>
+                apiEx.HttpCode >= (int)HttpStatus.InternalServerError ||
+                apiEx.HttpCode == (int)HttpStatus.PreconditionFailed ||
+                apiEx.HttpCode == (int)HttpStatus.TooManyRequests
+            ).Or<NetworkException>().WaitAndRetryAsync(retryDelay);
+            
             // Connection breaker restarts after 10 seconds
             var connectionBreaker = Policy
                 .Handle<NetworkException>()
@@ -292,10 +291,10 @@ namespace Xasu.Processors
 
         private void NotifyCompletedAndPopTraces()
         {
-            foreach(var trace in lastTraceTasks)
+            foreach (var trace in lastTraceTasks)
             {
                 TracesCompleted++;
-                XasuTracker.Instance.Log(string.Format("[TRACKER ({0}): {1}] Done with statement. {2} ", Thread.CurrentThread.ManagedThreadId, this.GetType(), trace.statement.id));
+                XasuTracker.Log(string.Format("[TRACKER ({0}): {1}] Done with statement. {2} ", Thread.CurrentThread.ManagedThreadId, this.GetType(), trace.statement.id));
                 trace.completionSource.SetResult(trace.statement);
                 localQueue.PopFront();
             }
@@ -306,7 +305,7 @@ namespace Xasu.Processors
             foreach (var trace in lastTraceTasks)
             {
                 TracesFailed++;
-                XasuTracker.Instance.LogError(string.Format("[TRACKER ({0}): {1}] Statement failed. {2} ", Thread.CurrentThread.ManagedThreadId, this.GetType(), trace.statement.id), ex);
+                XasuTracker.LogError(string.Format("[TRACKER ({0}): {1}] Statement failed. {2} ", Thread.CurrentThread.ManagedThreadId, this.GetType(), trace.statement.id), ex);
                 trace.completionSource.SetException(ex);
                 localQueue.PopFront();
             }
@@ -350,7 +349,7 @@ namespace Xasu.Processors
                 for (int i = 0; i < lastStatements.Count; i++)
                 {
                     TracesFromFallbackSent++;
-                    XasuTracker.Instance.Log(string.Format("[TRACKER ({0}): {1}] Done submitting fallback statement. {2} ", Thread.CurrentThread.ManagedThreadId, this.GetType(), lastStatements[i].id));
+                    XasuTracker.Log(string.Format("[TRACKER ({0}): {1}] Done submitting fallback statement. {2} ", Thread.CurrentThread.ManagedThreadId, this.GetType(), lastStatements[i].id));
                     oldFallback.ReadLine();
                 }
 
@@ -366,7 +365,7 @@ namespace Xasu.Processors
             }
 
             // Replace the old fallback with the new file
-            File.Replace(fallbackTmpFile, file, file+".bac");
+            File.Replace(fallbackTmpFile, file, file + ".bac");
 
             if (!tracesPending)
             {
@@ -391,13 +390,13 @@ namespace Xasu.Processors
                 using (var newFallback = new StreamWriter(newFallbackStream))
                 using (var failedTraces = File.AppendText(failedTracesFile))
                 using (var oldFallback = new StreamReader(oldFallbackStream))
-                { 
+                {
                     // Skip the sent traces (Count should be == 1)
                     for (int i = 0; i < lastStatements.Count; i++)
                     {
                         TracesFromFallbackFailed++;
                         // Log the error in the main log
-                        XasuTracker.Instance.LogError(string.Format("[TRACKER ({0}): {1}] Failed to send fallback trace with id \"{2}\".",
+                        XasuTracker.LogError(string.Format("[TRACKER ({0}): {1}] Failed to send fallback trace with id \"{2}\".",
                             Thread.CurrentThread.ManagedThreadId, this.GetType(), lastStatements[i].id), ex);
 
                         // Move the cursor
@@ -421,7 +420,7 @@ namespace Xasu.Processors
             }
             catch (SystemException se)
             {
-                XasuTracker.Instance.LogError(string.Format("[TRACKER ({0}): {1}] Failed to write traces in fallback errors.",
+                XasuTracker.LogError(string.Format("[TRACKER ({0}): {1}] Failed to write traces in fallback errors.",
                     Thread.CurrentThread.ManagedThreadId, this.GetType()), se);
             }
 

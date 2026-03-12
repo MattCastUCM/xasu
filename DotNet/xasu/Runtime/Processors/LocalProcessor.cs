@@ -4,7 +4,6 @@ using TinCan;
 using Xasu.Config;
 using CircularBuffer;
 using System.IO;
-using UnityEngine;
 using Xasu.Processors.Formatter;
 using Xasu.Util;
 using System.Linq;
@@ -41,8 +40,9 @@ namespace Xasu.Processors
                 throw new ArgumentException("Filename is null or empty!");
             }
 
-            this.localQueue = new CircularBuffer<TraceTask>(1000);
-            this.file = (useTempDataPath ? Application.temporaryCachePath : Application.persistentDataPath) + "/" + filename;
+            localQueue = new CircularBuffer<TraceTask>(1000);
+            // TODO: Test
+            file = (useTempDataPath ? ApplicationSettings.TemporaryCachePath : ApplicationSettings.PersistentDataPath) + "/" + filename;
             this.traceFormat = traceFormat;
             this.version = version;
             State = ProcessorState.Created;
@@ -51,11 +51,12 @@ namespace Xasu.Processors
         public Task<Statement> Enqueue(Statement statement)
         {
             var completionSource = new TaskCompletionSource<Statement>();
-            
+
             localQueue.PushBack(
-                new TraceTask {
+                new TraceTask
+                {
                     completionSource = completionSource,
-                    statement = statement 
+                    statement = statement
                 }
             );
             return completionSource.Task;
@@ -86,14 +87,14 @@ namespace Xasu.Processors
                     writer.WriteLine(TraceFormatter.Format(t.statement, traceFormat, version));
                     toPop++;
                     TracesCompleted++;
-                    XasuTracker.Instance.Log(string.Format("[TRACKER ({0}): {1}] Done with statement. {2} ", Thread.CurrentThread.ManagedThreadId, this.GetType(), t.statement.id));
+                    XasuTracker.Log(string.Format("[TRACKER ({0}): {1}] Done with statement. {2} ", Thread.CurrentThread.ManagedThreadId, this.GetType(), t.statement.id));
                     t.completionSource.SetResult(t.statement);
                 }
             }
             catch (IOException ex)
             {
                 TracesFailed++;
-                XasuTracker.Instance.LogError(string.Format("[TRACKER: {0}] Failed to write statement. {1}: {2} ", this.GetType(), ex.GetType(), ex.Message));
+                XasuTracker.LogError(string.Format("[TRACKER: {0}] Failed to write statement. {1}: {2} ", this.GetType(), ex.GetType(), ex.Message));
                 traceTask.completionSource?.SetException(ex);
                 State = ProcessorState.Errored;
                 ErrorMessage = ex.ToString();

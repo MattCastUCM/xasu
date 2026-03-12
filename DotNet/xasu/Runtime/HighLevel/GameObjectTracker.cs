@@ -1,39 +1,30 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 using TinCan;
 
 namespace Xasu.HighLevel
 {
     public class GameObjectTracker : AbstractSeriousGameHighLevelTracker<GameObjectTracker>
     {
-        /// <summary>
-        /// Types of GameObjects
-        /// </summary>
-
-        private readonly Dictionary<Enum, string> typeIds = new Dictionary<Enum, string>
-        {
-            { TrackedGameObject.Enemy,      "https://w3id.org/xapi/seriousgames/activity-types/enemy" },
-            { TrackedGameObject.Npc,        "https://w3id.org/xapi/seriousgames/activity-types/non-player-character"},
-            { TrackedGameObject.Item,       "https://w3id.org/xapi/seriousgames/activity-types/item"},
-            { TrackedGameObject.GameObject, "https://w3id.org/xapi/seriousgames/activity-types/game-object"}
-        };
-
-        /// <summary>
-        /// Verbs associated with the GameObject High Level API
-        /// </summary>
+        /**********************
+        *       Verbs
+        * *******************/
         public enum Verb
         {
             Interacted,
             Used
         }
-
-        private readonly Dictionary<Enum, string> verbIds = new Dictionary<Enum, string>
+        protected readonly Dictionary<Enum, string> verbIds = new Dictionary<Enum, string>
         {
             { Verb.Interacted,  "http://adlnet.gov/expapi/verbs/interacted"     },
             { Verb.Used,        "https://w3id.org/xapi/seriousgames/verbs/used" }
         };
+        protected override Dictionary<Enum, string> VerbIds => verbIds;
 
+
+        /**********************
+        *   GameObject Types 
+        * *******************/
         public enum TrackedGameObject
         {
             Enemy,
@@ -41,28 +32,33 @@ namespace Xasu.HighLevel
             Item,
             GameObject
         }
-        protected override Dictionary<Enum, string> VerbIds => verbIds;
-
+        protected readonly Dictionary<Enum, string> typeIds = new Dictionary<Enum, string>
+        {
+            { TrackedGameObject.Enemy,      "https://w3id.org/xapi/seriousgames/activity-types/enemy" },
+            { TrackedGameObject.Npc,        "https://w3id.org/xapi/seriousgames/activity-types/non-player-character"},
+            { TrackedGameObject.Item,       "https://w3id.org/xapi/seriousgames/activity-types/item"},
+            { TrackedGameObject.GameObject, "https://w3id.org/xapi/seriousgames/activity-types/game-object"}
+        };
         protected override Dictionary<Enum, string> TypeIds => typeIds;
 
+
+        /**********************
+        *   Extensions
+        * *******************/
         protected override Dictionary<Enum, string> ExtensionIds => null;
 
-        /// <summary>
-        /// Player interacted with a game object.
-        /// Type = GameObject 
-        /// </summary>
-        /// <param name="gameobjectId">Identifier.</param>
-        public StatementPromise Interacted(string gameobjectId)
-        {
-            return Interacted(gameobjectId, TrackedGameObject.GameObject);
-        }
+
+        /**********************
+        *     Templates
+        * *******************/
 
         /// <summary>
         /// Player interacted with a game object.
+        /// Type = GameObject by default
         /// </summary>
         /// <param name="gameobjectId">Identifier.</param>
         /// <param name="type">TrackedGameObject type.</param>
-        public StatementPromise Interacted(string gameobjectId, TrackedGameObject type)
+        public StatementPromise Interacted(string gameobjectId, TrackedGameObject type = TrackedGameObject.GameObject)
         {
             return Enqueue(new Statement
             {
@@ -73,19 +69,11 @@ namespace Xasu.HighLevel
 
         /// <summary>
         /// Player interacted with a game object.
-        /// Type = GameObject 
-        /// </summary>
-        /// <param name="gameobjectId">Reachable identifier.</param>
-        public StatementPromise Used(string gameobjectId)
-        {
-            return Used(gameobjectId, TrackedGameObject.GameObject);
-        }
-
-        /// <summary>
-        /// Player interacted with a game object.
+        /// Type = GameObject by default
         /// </summary>
         /// <param name="gameobjectId">TrackedGameObject identifier.</param>
-        public StatementPromise Used(string gameobjectId, TrackedGameObject type)
+        /// <param name="type">TrackedGameObject type.</param>
+        public StatementPromise Used(string gameobjectId, TrackedGameObject type = TrackedGameObject.GameObject)
         {
             return Enqueue(new Statement
             {

@@ -2,14 +2,11 @@
 using System.Collections.Generic;
 using Xasu.Exceptions;
 using TinCan;
-using UnityEngine;
 
 namespace Xasu.HighLevel
 {
-
     public class CompletableTracker : AbstractSeriousGameHighLevelTracker<CompletableTracker>
     {
-
         /**********************
         *       Verbs
         * *******************/
@@ -19,20 +16,18 @@ namespace Xasu.HighLevel
             Progressed,
             Completed
         }
-
-        public Dictionary<Enum, string> verbIds = new Dictionary<Enum, string>()
+        protected readonly Dictionary<Enum, string> verbIds = new Dictionary<Enum, string>()
         {
             { Verb.Initialized,   "http://adlnet.gov/expapi/verbs/initialized"  },
             { Verb.Progressed,    "http://adlnet.gov/expapi/verbs/progressed"   },
             { Verb.Completed,     "http://adlnet.gov/expapi/verbs/completed"    }
         };
-
         protected override Dictionary<Enum, string> VerbIds => verbIds;
 
-        /**********************
-        *   Completable Types
-        * *******************/
 
+        /**********************
+        *   Completable Types 
+        * *******************/
         public enum CompletableType
         {
             Game,
@@ -44,12 +39,12 @@ namespace Xasu.HighLevel
             StoryNode,
             Race,
             Completable,
-            // Dialog completables extension
+
+            // Dialog completables extensions
             DialogNode,
             DialogFragment
         }
-
-        private readonly Dictionary<Enum, string> typeIds = new Dictionary<Enum, string>
+        protected readonly Dictionary<Enum, string> typeIds = new Dictionary<Enum, string>
         {
             { CompletableType.Game,            "https://w3id.org/xapi/seriousgames/activity-types/serious-game"    },
             { CompletableType.Session,         "https://w3id.org/xapi/seriousgames/activity-types/session"         },
@@ -63,58 +58,56 @@ namespace Xasu.HighLevel
             { CompletableType.DialogNode,      "https://w3id.org/xapi/seriousgames/activity-types/dialog-node"     },
             { CompletableType.DialogFragment,  "https://w3id.org/xapi/seriousgames/activity-types/dialog-fragment" }
         };
-
         protected override Dictionary<Enum, string> TypeIds => typeIds;
 
+
+        /**********************
+        *   Extensions
+        * *******************/
         public enum Extensions
         {
             Progress
         }
-
-        private readonly Dictionary<Enum, string> extensionIds = new Dictionary<Enum, string>
+        protected readonly Dictionary<Enum, string> extensionIds = new Dictionary<Enum, string>
         {
-            { Extensions.Progress,            "https://w3id.org/xapi/seriousgames/extensions/progress"    }
+            { Extensions.Progress, "https://w3id.org/xapi/seriousgames/extensions/progress"    }
         };
-
         protected override Dictionary<Enum, string> ExtensionIds => extensionIds;
 
+
         /**********************
-            * Static attributes
-            * *******************/
+        *   Attributes
+        * *******************/
+        protected Dictionary<string, DateTime> initializedTimes = new Dictionary<string, DateTime>();
+        
 
-        private static Dictionary<string, DateTime> initializedTimes = new Dictionary<string, DateTime>();
-
-        /// <summary>
-        /// Player initialized a completable.
-        /// </summary>
-        /// <param name="completableId">Completable identifier.</param>
-        public StatementPromise Initialized(string completableId)
-        {
-            return Initialized(completableId, CompletableType.Completable);
-        }
+        /**********************
+        *   Templates
+        * *******************/
 
         /// <summary>
         /// Player initialized a completable.
+        /// Type = Completable by default
         /// </summary>
         /// <param name="completableId">Completable identifier.</param>
         /// <param name="type">Completable type.</param>
-        public StatementPromise Initialized(string completableId, CompletableType type)
+        public StatementPromise Initialized(string completableId, CompletableType type = CompletableType.Completable)
         {
             bool addInitializedTime = true;
             if (initializedTimes.ContainsKey(completableId))
             {
-                if (XasuTracker.Instance.TrackerConfig.StrictMode)
+                if (XasuTracker.TrackerConfig.StrictMode)
                 {
                     throw new XApiException("The initialized statement for the specified id has already been sent!");
                 }
                 else
                 {
-                    XasuTracker.Instance.LogWarning("The initialized statement for the specified id has already been sent!");
+                    XasuTracker.LogWarning("The initialized statement for the specified id has already been sent!");
                     addInitializedTime = false;
                 }
             }
 
-            if(addInitializedTime)
+            if (addInitializedTime)
                 initializedTimes.Add(completableId, DateTime.Now);
             return Enqueue(new Statement
             {
@@ -125,22 +118,12 @@ namespace Xasu.HighLevel
 
         /// <summary>
         /// Player progressed a completable.
-        /// Type = Completable
-        /// </summary>
-        /// <param name="completableId">Completable identifier.</param>
-        /// <param name="value">New value for the completable's progress.</param>
-        public StatementPromise Progressed(string completableId, float value)
-        {
-            return Progressed(completableId, CompletableType.Completable, value);
-        }
-
-        /// <summary>
-        /// Player progressed a completable.
+        /// Type = Completable by default
         /// </summary>
         /// <param name="completableId">Completable identifier.</param>
         /// <param name="value">New value for the completable's progress.</param>
         /// <param name="type">Completable type.</param>
-        public StatementPromise Progressed(string completableId, CompletableType type, float value)
+        public StatementPromise Progressed(string completableId, float value, CompletableType type = CompletableType.Completable)
         {
             return Enqueue(new Statement
             {
@@ -151,29 +134,21 @@ namespace Xasu.HighLevel
 
         /// <summary>
         /// Player completed a completable.
-        /// Type = Completable
-        /// </summary>
-        /// <param name="completableId">Completable identifier.</param>
-        public StatementPromise Completed(string completableId)
-        {
-            return Completed(completableId, CompletableType.Completable, false, 0);
-        }
-
-        /// <summary>
-        /// Player completed a completable.
+        /// Type = Completable by default
         /// </summary>
         /// <param name="completableId">Completable identifier.</param>
         /// <param name="type">Completable type.</param>
-        public StatementPromise Completed(string completableId, CompletableType type)
+        public StatementPromise Completed(string completableId, CompletableType type = CompletableType.Completable)
         {
             return Completed(completableId, type, false, 0);
         }
 
         /// <summary>
         /// Player completed a completable.
-        /// Type = Completable
+        /// Type = Completable by default
         /// </summary>
         /// <param name="completableId">Completable identifier.</param>
+        /// <param name="durationInSeconds">Time to complete.</param>
         public StatementPromise Completed(string completableId, float durationInSeconds)
         {
             return Completed(completableId, CompletableType.Completable, true, durationInSeconds);
@@ -184,6 +159,7 @@ namespace Xasu.HighLevel
         /// </summary>
         /// <param name="completableId">Completable identifier.</param>
         /// <param name="type">Completable type.</param>
+        /// <param name="durationInSeconds">Time to complete.</param>
         public StatementPromise Completed(string completableId, CompletableType type, float durationInSeconds)
         {
             return Completed(completableId, type, true, durationInSeconds);
@@ -193,7 +169,7 @@ namespace Xasu.HighLevel
         {
             if (!hasDuration && !initializedTimes.ContainsKey(completableId))
             {
-                if (XasuTracker.Instance.TrackerConfig.StrictMode)
+                if (XasuTracker.TrackerConfig.StrictMode)
                 {
                     throw new XApiException("The completed statement for the specified id has not been initialized!");
                 }
@@ -201,8 +177,7 @@ namespace Xasu.HighLevel
                 {
                     hasDuration = true;
                     durationInSeconds = 0f;
-                    XasuTracker.Instance.LogWarning("The completed statement for the specified id has not been initialized and" +
-                        " therefore the duration is going to be 0.");
+                    XasuTracker.LogWarning("The completed statement for the specified id has not been initialized and therefore the duration is going to be 0.");
                 }
             }
 

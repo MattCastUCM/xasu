@@ -1,10 +1,10 @@
 ﻿using System;
 
 namespace Xasu.Auth.Protocols.OAuth2
-{    
+{
     /// <summary>
-     /// Base64Url encoder/decoder
-     /// </summary>
+    /// Base64Url encoder/decoder
+    /// </summary>
     public static class Base64Url
     {
         /// <summary>

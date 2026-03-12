@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Linq;
 
@@ -13,7 +12,7 @@ public static class UriHelper
         if (query.Length == 0)
             return new NameValueCollection();
 
-        var dict =  query.TrimStart('?')
+        var dict = query.TrimStart('?')
                         .Split(new[] { '&', ';' }, StringSplitOptions.RemoveEmptyEntries)
                         .Select(parameter => parameter.Split(new[] { '=' }, StringSplitOptions.RemoveEmptyEntries))
                         .GroupBy(parts => parts[0],
@@ -22,7 +21,7 @@ public static class UriHelper
                                       grouping => string.Join(",", grouping));
 
         var nvc = new NameValueCollection();
-        foreach(var kv in dict)
+        foreach (var kv in dict)
         {
             nvc.Add(kv.Key, kv.Value);
         }

@@ -1,7 +1,5 @@
-﻿
-namespace Xasu.Auth.Protocols.OAuth2
+﻿namespace Xasu.Auth.Protocols.OAuth2
 {
-
     internal class OAuth2AuthorizationCode
     {
         public OAuth2AuthorizationCode() { }

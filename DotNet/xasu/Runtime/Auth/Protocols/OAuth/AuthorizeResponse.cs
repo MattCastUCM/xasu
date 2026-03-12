@@ -2,8 +2,7 @@
 
 namespace Xasu.Auth.Protocols.OAuth
 {
-
-    internal class AuthorizeResponse
+    public class AuthorizeResponse
     {
         [JsonProperty("oauth_token")]
         public string OAuthToken { get; set; }

@@ -2,10 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using TinCan;
-using TinCan.Json;
 
 namespace Xasu.Util
 {
@@ -96,11 +93,11 @@ namespace Xasu.Util
 
             if (statement.context == null)
             {
-                statement.context = XasuTracker.Instance.DefaultContext;
+                statement.context = XasuTracker.DefaultContext;
             }
             if (statement.context.registration == null)
             {
-                statement.context.registration = XasuTracker.Instance.DefaultContextRegistrationId;
+                statement.context.registration = XasuTracker.DefaultContextRegistrationId;
             }
 
             if (statement.context.extensions == null)

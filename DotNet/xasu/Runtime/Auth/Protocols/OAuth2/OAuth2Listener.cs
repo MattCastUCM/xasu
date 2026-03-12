@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Specialized;
-using UnityEngine;
 using Xasu.Auth.Utils;
 
 namespace Xasu.Auth.Protocols.OAuth2
@@ -17,7 +16,7 @@ namespace Xasu.Auth.Protocols.OAuth2
         {
             authReply = query;
 
-            if (Array.IndexOf(query.AllKeys, "code") != -1 
+            if (Array.IndexOf(query.AllKeys, "code") != -1
                 && Array.IndexOf(query.AllKeys, "session_state") != -1)
             {
                 onAuthorizeResponse?.Invoke(new OAuth2AuthorizationCode
@@ -28,7 +27,7 @@ namespace Xasu.Auth.Protocols.OAuth2
             }
             else
             {
-                XasuTracker.Instance.Log("[OAuth2] No code or session-state found, ignoring previous login attempt...");
+                XasuTracker.Log("[OAuth2] No code or session-state found, ignoring previous login attempt...");
             }
         }
 

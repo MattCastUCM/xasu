@@ -8,12 +8,11 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Polly;
 using TinCan;
-using UnityEngine;
-using UnityEngine.Networking;
 using Xasu.Auth.Protocols.OAuth2;
 using Xasu.Auth.Utils;
 using Xasu.Exceptions;
 using Xasu.Requests;
+using Xasu.Util;
 
 namespace Xasu.Auth.Protocols
 {
@@ -64,7 +63,7 @@ namespace Xasu.Auth.Protocols
         */
 
         public IAsyncPolicy Policy { get; set; }
-        
+
         public IHttpRequestHandler RequestHandler { get; set; }
 
         public AuthState State { get; protected set; }
@@ -80,7 +79,7 @@ namespace Xasu.Auth.Protocols
         {
             initConfig = config;
 
-            XasuTracker.Instance.Log("[OAuth2] Starting");
+            XasuTracker.Log("[OAuth2] Starting");
             // Main params
             tokenEndpoint = config.GetRequiredValue(tokenEndpointField, fieldMissingMessage);
             grantType = config.GetRequiredValue(grantTypeField, fieldMissingMessage).ToLower();
@@ -107,7 +106,8 @@ namespace Xasu.Auth.Protocols
             login_hint = config.Value(loginHintField);
 
             var homePage = tokenEndpoint.Replace((new Uri(tokenEndpoint)).AbsolutePath, "");
-            if (config.ContainsKey(homePageField)) {
+            if (config.ContainsKey(homePageField))
+            {
                 homePage = config.Value(homePageField);
             }
 
@@ -137,20 +137,21 @@ namespace Xasu.Auth.Protocols
                     throw new NotSupportedException(string.Format(unsupportedGrantTypeMessage, grantType));
             }
 
-            if(token != null)
+            if (token != null)
             {
-                XasuTracker.Instance.Log("[OAuth2] Token obtained: " + token.AccessToken);
+                XasuTracker.Log("[OAuth2] Token obtained: " + token.AccessToken);
                 Agent = new Agent
                 {
-                    account = new AgentAccount {
+                    account = new AgentAccount
+                    {
                         homePage = homePage,
                         name = token.Username
                     }
                 };
             }
         }
-        
-        public async Task UpdateParamsForAuth(MyHttpRequest request)
+
+        public async Task UpdateParamsForAuth(HttpRequest request)
         {
             if (token.Expired)
             {
@@ -170,7 +171,7 @@ namespace Xasu.Auth.Protocols
             if (toRegister == null) return;
 
             onAuthorizationInfoUpdate += toRegister;
-            if(token != null)
+            if (token != null)
             {
                 toRegister(token);
             }
@@ -188,13 +189,13 @@ namespace Xasu.Auth.Protocols
             }
 
             var cancellationToken = new CancellationToken();
-            var port = UnityEngine.Random.Range(25525, 65535);
+            var port = RandomHelper.Next(25525, 65535);
             var listener = new OAuth2Listener();
             var redirectUrl = AuthUtility.ListenForCallback(port, listener, cancellationToken);
 
             // Do Authorize Request (In WebGL this is a redirect)
             var authCode = await DoAuthorizeRequest(authUrl, clientId, scope, state, tokenValue, login_hint, redirectUrl, listener, pkceType, codeChallenge);
-            
+
             var form = new Dictionary<string, string>()
             {
                 { "code", authCode.Code },
@@ -204,13 +205,14 @@ namespace Xasu.Auth.Protocols
             if (!string.IsNullOrEmpty(codeVerifier))
             {
                 form.Add("code_verifier", codeVerifier);
-            };
-            
+            }
+            ;
+
             // Do Token Request (without scope or state)
             return await DoTokenRequest(tokenUrl, clientId, "authorization_code", form);
         }
 
-        private async Task<OAuth2Token> DoResourceOwnedPasswordCredentialsFlow(string tokenUrl, string clientId, string username, string password, 
+        private async Task<OAuth2Token> DoResourceOwnedPasswordCredentialsFlow(string tokenUrl, string clientId, string username, string password,
             string scope, string state, string login_hint)
         {
             var form = new Dictionary<string, string>()
@@ -282,10 +284,10 @@ namespace Xasu.Auth.Protocols
                 // This handles the cases where the redirect could have been done already such as in WebGL
                 listener.RegisterListener(auth => authorizeResponse = auth);
 
-                if(authorizeResponse == null)
+                if (authorizeResponse == null)
                 {
                     var url = RequestHandler.AppendParamsToExistingQueryString(authorizeEndpoint + "?", parameters);
-                    AuthUtility.OpenUrl(url);
+                    ApplicationSettings.OpenURL(url);
                     while (authorizeResponse == null)
                     {
                         await Task.Yield();
@@ -336,7 +338,7 @@ namespace Xasu.Auth.Protocols
             uwr.SetRequestHeader("Content-Type", "application/x-www-form-urlencoded");
             */
 
-            return await DoAuthorizationRequest(clientId, new MyHttpRequest { url = tokenUrl, method = "POST", form = form, policy = Policy });
+            return await DoAuthorizationRequest(clientId, new HttpRequest { url = tokenUrl, method = "POST", form = form, policy = Policy });
         }
 
         private async Task<OAuth2Token> DoRefreshToken(string tokenUrl, string clientId, string refresh_token)
@@ -348,7 +350,7 @@ namespace Xasu.Auth.Protocols
                 });
         }
 
-        private async Task<OAuth2Token> DoAuthorizationRequest(string clientId, MyHttpRequest httpRequest)
+        private async Task<OAuth2Token> DoAuthorizationRequest(string clientId, HttpRequest httpRequest)
         {
             try
             {

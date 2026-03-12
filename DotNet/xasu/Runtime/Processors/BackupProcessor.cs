@@ -7,7 +7,6 @@ using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 using TinCan;
-using UnityEngine;
 using Xasu.Auth.Protocols;
 using Xasu.Config;
 using Xasu.Exceptions;
@@ -30,7 +29,7 @@ namespace Xasu.Processors
         {
         }
 
-        public BackupProcessor(string backupFileName, TraceFormats traceFormat, TCAPIVersion version, string backupEndpoint, 
+        public BackupProcessor(string backupFileName, TraceFormats traceFormat, TCAPIVersion version, string backupEndpoint,
             JObject backupRequestParameters, IHttpRequestHandler requestHandler, IAuthProtocol authorization, IAsyncPolicy policy) : base(backupFileName, traceFormat, version, true)
         {
             this.backupEndpoint = backupEndpoint;
@@ -52,7 +51,7 @@ namespace Xasu.Processors
                     { "tofile", true },
                     { "result", backupContents }
                 };
-                var myRequest = new MyHttpRequest
+                var myRequest = new HttpRequest
                 {
                     url = backupEndpoint,
                     method = "POST",
@@ -67,7 +66,7 @@ namespace Xasu.Processors
                 switch (traceFormat)
                 {
                     case TraceFormats.XAPI: myRequest.contentType = "application/json"; break;
-                    case TraceFormats.CSV:  myRequest.contentType = "text/csv";         break;
+                    case TraceFormats.CSV: myRequest.contentType = "text/csv"; break;
                 }
 
                 // Add custom parameters from config file
@@ -82,7 +81,7 @@ namespace Xasu.Processors
                     // Request headers
                     if (backupRequestParameters.ContainsKey("headers") && backupRequestParameters["headers"].Type == JTokenType.Object)
                     {
-                        foreach(var kv in backupRequestParameters["headers"].ToObject<Dictionary<string, object>>())
+                        foreach (var kv in backupRequestParameters["headers"].ToObject<Dictionary<string, object>>())
                         {
                             myRequest.headers.Add(kv.Key, kv.Value.ToString());
                         }
@@ -119,7 +118,7 @@ namespace Xasu.Processors
                         default:
                             var text = Encoding.UTF8.GetString(myResponse.content);
                             State = ProcessorState.Errored;
-                            XasuTracker.Instance.LogError(string.Format("[TRACKER: Backup Processor] Backup upload returned status {0} with message: {1}", myResponse.status, text));
+                            XasuTracker.LogError(string.Format("[TRACKER: Backup Processor] Backup upload returned status {0} with message: {1}", myResponse.status, text));
                             break;
                     }
 

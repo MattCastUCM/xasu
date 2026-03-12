@@ -7,7 +7,7 @@ using TinCan.Documents;
 using TinCan.Json;
 using Xasu.CMI5.Model;
 using Xasu.Exceptions;
-using Xasu.Util;
+using static Xasu.CMI5.BaseCmi5Utility;
 
 namespace Xasu.CMI5
 {

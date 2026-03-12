@@ -3,7 +3,7 @@ using Xasu.Auth.Utils;
 
 namespace Xasu.Auth.Protocols.OAuth
 {
-    internal class OAuthListener : IAuthListener
+    public class OAuthListener : IAuthListener
     {
         public delegate void OnAuthorizeResponse(AuthorizeResponse response);
         public OnAuthorizeResponse onAuthorizeResponse;

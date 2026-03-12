@@ -2,11 +2,9 @@ using System;
 using System.Collections.Generic;
 using TinCan;
 using Xasu.Exceptions;
-using Xasu.Processors;
 
 namespace Xasu.HighLevel
 {
-
     public class ScormTracker : AbstractHighLevelTracker<ScormTracker>
     {
         /**********************
@@ -16,15 +14,14 @@ namespace Xasu.HighLevel
         {
             Initialized, // Player initialized a lesson.
             Suspended,   // Player suspended a lesson.
-            Resumed,    // Player resumed a lesson.
-            Terminated, // Player terminated a lesson.
-            Progressed, // Player progressed in a lesson.
-            Passed,     // Learner attempted and succeeded in a judged activity.
+            Resumed,     // Player resumed a lesson.
+            Terminated,  // Player terminated a lesson.
+            Progressed,  // Player progressed in a lesson.
+            Passed,      // Learner attempted and succeeded in a judged activity.
             Failed,      // Learner attempted and failed in a judged activity.
-            Scored      // Player scored in a lesson.
+            Scored       // Player scored in a lesson.
         }
-
-        public Dictionary<Enum, string> verbIds = new Dictionary<Enum, string>()
+        protected readonly Dictionary<Enum, string> verbIds = new Dictionary<Enum, string>()
         {
             { Verb.Initialized,   "http://adlnet.gov/expapi/verbs/initialized" },
             { Verb.Suspended,     "http://adlnet.gov/expapi/verbs/suspended"   },
@@ -37,6 +34,10 @@ namespace Xasu.HighLevel
         };
         protected override Dictionary<Enum, string> VerbIds => verbIds;
 
+
+        /**********************
+        *   Activity Types 
+        * *******************/
         public enum ScormType
         {
             SCO,         // Sharable Content Object Reference Model
@@ -45,33 +46,37 @@ namespace Xasu.HighLevel
             Assessment,  // An assessment or quiz.
             Interaction, // An interactive element, such as a game or simulation.
             Objective,   // A learning objective or goal.
-            Attempt     // An attempt or submission of an activity.
+            Attempt      // An attempt or submission of an activity.
         }
-
-        /**********************
-        *   Activity Types 
-        * *******************/
-        public Dictionary<Enum, string> typeIds = new Dictionary<Enum, string>()
-            {
-                { ScormType.SCO,             "http://adlnet.gov/expapi/activities/lesson"        },
-                { ScormType.Course,          "http://adlnet.gov/expapi/activities/course"        },
-                { ScormType.Module,          "http://adlnet.gov/expapi/activities/module"        },
-                { ScormType.Assessment,      "http://adlnet.gov/expapi/activities/assessment"    },
-                { ScormType.Interaction,     "http://adlnet.gov/expapi/activities/interaction"   },
-                { ScormType.Objective,       "http://adlnet.gov/expapi/activities/objective"     },
-                { ScormType.Attempt,         "http://adlnet.gov/expapi/activities/attempt"       },
-            };
+        protected readonly Dictionary<Enum, string> typeIds = new Dictionary<Enum, string>()
+        {
+            { ScormType.SCO,             "http://adlnet.gov/expapi/activities/lesson"        },
+            { ScormType.Course,          "http://adlnet.gov/expapi/activities/course"        },
+            { ScormType.Module,          "http://adlnet.gov/expapi/activities/module"        },
+            { ScormType.Assessment,      "http://adlnet.gov/expapi/activities/assessment"    },
+            { ScormType.Interaction,     "http://adlnet.gov/expapi/activities/interaction"   },
+            { ScormType.Objective,       "http://adlnet.gov/expapi/activities/objective"     },
+            { ScormType.Attempt,         "http://adlnet.gov/expapi/activities/attempt"       },
+        };
         protected override Dictionary<Enum, string> TypeIds => typeIds;
 
-        protected override Dictionary<Enum, string> ExtensionIds => null;
 
         /**********************
-        * Static attributes
+        *   Extensions 
         * *******************/
+        protected override Dictionary<Enum, string> ExtensionIds => null;
 
-        private static Dictionary<string, DateTime> initializedTimes = new Dictionary<string, DateTime>();
 
-        private static Dictionary<string, DateTime> suspendedTimes = new Dictionary<string, DateTime>();
+        /**********************
+        *   Attributes
+        * *******************/
+        Dictionary<string, DateTime> initializedTimes = new Dictionary<string, DateTime>();
+        Dictionary<string, DateTime> suspendedTimes = new Dictionary<string, DateTime>();
+
+
+        /**********************
+        *   Templates
+        * *******************/
 
         #region Initialized
         /// <summary>
@@ -83,13 +88,13 @@ namespace Xasu.HighLevel
             bool addInitializedTime = true;
             if (initializedTimes.ContainsKey(scoId))
             {
-                if (XasuTracker.Instance.TrackerConfig.StrictMode)
+                if (XasuTracker.TrackerConfig.StrictMode)
                 {
                     throw new XApiException("The initialized statement for the specified id has already been sent!");
                 }
                 else
                 {
-                    XasuTracker.Instance.LogWarning("The initialized statement for the specified id has already been sent!");
+                    XasuTracker.LogWarning("The initialized statement for the specified id has already been sent!");
                     addInitializedTime = false;
                 }
             }
@@ -114,25 +119,25 @@ namespace Xasu.HighLevel
             bool addSuspendedTime = true;
             if (suspendedTimes.ContainsKey(scoId))
             {
-                if (XasuTracker.Instance.TrackerConfig.StrictMode)
+                if (XasuTracker.TrackerConfig.StrictMode)
                 {
                     throw new XApiException("The suspended statement for the specified id has already been sent!");
                 }
                 else
                 {
-                    XasuTracker.Instance.LogWarning("The suspended statement for the specified id has already been sent!");
+                    XasuTracker.LogWarning("The suspended statement for the specified id has already been sent!");
                     addSuspendedTime = false;
                 }
             }
             if (!initializedTimes.ContainsKey(scoId))
             {
-                if (XasuTracker.Instance.TrackerConfig.StrictMode)
+                if (XasuTracker.TrackerConfig.StrictMode)
                 {
                     throw new XApiException("The Suspended statement for the specified id has not been initialized!");
                 }
                 else
                 {
-                    XasuTracker.Instance.LogWarning("The Suspended statement for the specified id has not been initialized!");
+                    XasuTracker.LogWarning("The Suspended statement for the specified id has not been initialized!");
                     addSuspendedTime = false;
                 }
             }
@@ -159,13 +164,13 @@ namespace Xasu.HighLevel
             bool addResumedTime = true;
             if (!suspendedTimes.ContainsKey(scoId))
             {
-                if (XasuTracker.Instance.TrackerConfig.StrictMode)
+                if (XasuTracker.TrackerConfig.StrictMode)
                 {
                     throw new XApiException("The resumed statement for the specified id cannot be sent before a suspend!");
                 }
                 else
                 {
-                    XasuTracker.Instance.LogWarning("The resumed statement for the specified id cannot be sent before a suspend!");
+                    XasuTracker.LogWarning("The resumed statement for the specified id cannot be sent before a suspend!");
                     addResumedTime = false;
                 }
             }
@@ -199,7 +204,6 @@ namespace Xasu.HighLevel
         }
         #endregion
 
-
         #region Terminated
         /// <summary>
         /// Terminates a SCORM lesson.
@@ -227,7 +231,6 @@ namespace Xasu.HighLevel
         }
         #endregion
 
-
         #region Passed
 
         /// <summary>
@@ -244,7 +247,7 @@ namespace Xasu.HighLevel
                 target = GetTargetActivity(scoId, ScormType.SCO)
             }).WithSuccess(true)
             .WithScoreScaled(score)
-            .WithTimeSpanDuration(TimeSpan.FromSeconds(durationInSeconds));;
+            .WithTimeSpanDuration(TimeSpan.FromSeconds(durationInSeconds)); ;
         }
 
         #endregion
@@ -285,10 +288,12 @@ namespace Xasu.HighLevel
             }).WithScoreScaled(value);
         }
         #endregion
-        
-        protected static StatementPromise Enqueue(Statement statement)
+
+
+        // TODO: Test
+        protected override StatementPromise Enqueue(Statement statement)
         {
-            return AbstractHighLevelTracker<ScormTracker>.Enqueue(statement).CreateAndAddContextCategoryProfileActivity(AbstractHighLevelTracker<ScormTracker>.ContextActivityIds["Scorm"]);
+            return base.Enqueue(statement).CreateAndAddContextCategoryProfileActivity(ContextActivityIds["Scorm"]);
         }
     }
 }

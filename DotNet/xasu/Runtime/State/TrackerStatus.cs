@@ -1,6 +1,4 @@
-﻿using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
-using System;
+﻿using System;
 using Xasu.Auth.Protocols;
 using Xasu.Processors;
 using Xasu.Util;
@@ -114,7 +112,7 @@ namespace Xasu
             }
 
             // Online Status
-            if(onlineProcessor != null)
+            if (onlineProcessor != null)
             {
                 OnlinePending = onlineProcessor.TracesPending;
                 OnlineCompleted = onlineProcessor.TracesCompleted;
