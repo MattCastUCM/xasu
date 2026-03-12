@@ -104,7 +104,7 @@ When Xasu is added to your scene it won't initialize and connect by default.
 To initialize it automatically, please check the "Auto Start" property in the object inspector.
 You can also check "Enable Debug Log" to display debug logs in Unity console.
 
-![alt text](xasu-parameters.png)
+![alt text](./Unity/xasu-parameters.png)
 
 You can also initialize Xasu manually by using the ```Init``` method:
 ```cs
