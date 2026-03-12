@@ -88,9 +88,9 @@ namespace Xasu.Util
         /// Directory to store data that must be retained between executions
         /// The files can only be erased by users directly and not by any app updates
         /// 
-        /// Windows: %userprofile%/AppData/Roaming/Xasu/(companyName)/(productName)
-        /// Linux: ~/.config/Xasu/(companyName)/(productName)                            (via XDG standards)
-        /// macOS: ~/Library/Application Support/Xasu/(companyName)/(productName)
+        /// Windows: %userprofile%/AppData/Roaming/Xasu/(CompanyName)/(ProductName)
+        /// Linux: ~/.config/Xasu/(CompanyName)/(ProductName)                            (via XDG standards)
+        /// macOS: ~/Library/Application Support/Xasu/(CompanyName)/(ProductName)
         /// </summary>
         public virtual string PersistentDataPath
         {
@@ -103,9 +103,9 @@ namespace Xasu.Util
         /// <summary>
         /// Path to a temporary data/cache directory 
         /// 
-        /// Windows: %userprofile%/AppData/Local/XasuCache/(companyName)/(productName)
-        /// Linux: ~/.local/share/XasuCache/(companyName)/(productName)
-        /// macOS: ~/Library/Application Support/XasuCache/(companyName)/(productName)/cache    OR   ~/Library/Caches/XasuCache/(companyName)/(productName)
+        /// Windows: %userprofile%/AppData/Local/XasuCache/(CompanyName)/(ProductName)
+        /// Linux: ~/.local/share/XasuCache/(CompanyName)/(ProductName)
+        /// macOS: ~/Library/Application Support/XasuCache/(CompanyName)/(ProductName)/cache    OR   ~/Library/Caches/XasuCache/(CompanyName)/(ProductName)
         /// </summary>
         public virtual string TemporaryCachePath
         {
@@ -116,24 +116,57 @@ namespace Xasu.Util
         #endregion
 
 
-        public BaseApplicationSettings() : this(DEFAULT_COMP_NAME, DEFAULT_APP_NAME, DEFAULT_TRACKER_CONFIG_PATH, DEFAULT_ASSETS_PATH) { }
+        public BaseApplicationSettings() : this(DEFAULT_APP_NAME, DEFAULT_COMP_NAME, DEFAULT_TRACKER_CONFIG_PATH, DEFAULT_ASSETS_PATH) { }
+
         /// <summary>
         /// IF THE PATHS FORMATTING ARE PLATFORM DEPENDENT, THE CONSTRUCTOR SHOULD BE CALLED WITH
         /// DIFFERENT PARAMETERS FOR EACH SUPPORTED PLATFORM IN ORDER TO MATCH THEIR FILE SYSTEMS
         /// </summary>
-        public BaseApplicationSettings(string compName, string prodName, string trckConfPath, string assetPath, string persDataPath = null, string cachePath = null)
+        /// <param name="prodName">Application name</param>
+        /// <param name="compName">Company/Studio/Developer name</param>
+        /// <param name="trckConfPath">Directory where the tracker config file will be stored in</param>
+        /// <param name="assetPath">Directory where the assets will be stored in</param>
+        /// <param name="persDataPath">Directory where data will be persisted in</param>
+        /// <param name="cachePath">Directory where cache will be stored in</param>
+        public BaseApplicationSettings(string prodName = DEFAULT_APP_NAME, string compName = DEFAULT_COMP_NAME,
+            string trckConfPath = DEFAULT_TRACKER_CONFIG_PATH, string assetPath = DEFAULT_ASSETS_PATH, string persDataPath = null, string cachePath = null)
         {
+            if (string.IsNullOrEmpty(prodName))
+            {
+                prodName = DEFAULT_APP_NAME;
+            }
             ProductName = prodName;
+
+            if (string.IsNullOrEmpty(compName))
+            {
+                compName = DEFAULT_COMP_NAME;
+            }
             CompanyName = compName;
+
+            if (string.IsNullOrEmpty(trckConfPath))
+            {
+                trckConfPath = DEFAULT_TRACKER_CONFIG_PATH;
+            }
             TrackerConfigPath = trckConfPath;
+
+            if (string.IsNullOrEmpty(assetPath))
+            {
+                assetPath = DEFAULT_ASSETS_PATH;
+            }
             AssetsPath = assetPath;
 
-            PersistentDataPath = (persDataPath == null) ?
-                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Xasu", compName, _productName) : persDataPath;
+            if (string.IsNullOrEmpty(persDataPath))
+            {
+                persDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Xasu", compName, _productName);
+            }
+            PersistentDataPath = persDataPath;
             Directory.CreateDirectory(PersistentDataPath);
 
-            TemporaryCachePath = (persDataPath == null) ?
-                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "XasuCache", compName, _productName) : cachePath;
+            if (string.IsNullOrEmpty(cachePath))
+            {
+                cachePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "XasuCache", compName, _productName);
+            }
+            TemporaryCachePath = cachePath;
             Directory.CreateDirectory(TemporaryCachePath);
         }
 

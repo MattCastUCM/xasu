@@ -14,7 +14,7 @@ The *su* in Xasu also stands for *super*, since it is:
 
 - Super **Supportive** (multi-platform/protocol/cmi5): Xasu has been designed to run on Unity, respecting the nature of cross-platform games and environments (Windows, Mac, Linux, Android and WebGL, iOS incoming). In addition, Xasu supports multiple authorization protocols (basic/oauth/oauth2) and the cmi5 protocol for conducting courses and activities with xAPI in Learning Management Systems (LMSs).
 
-- Super **Asyncronous** (uses async/await): Xasu's architecture provides a proper asynchronous queue to avoid interruptions that allows deveñpèrs to use the .NET asynchronous API (async/await) and to check on the result of sending synchronously-sent traces, even if the traces are sent in batches.
+- Super **Asyncronous** (uses async/await): Xasu's architecture provides a proper asynchronous queue to avoid interruptions that allows developers to use the .NET asynchronous API (async/await) and to check on the result of sending synchronously-sent traces, even if the traces are sent in batches.
 
 - Super **Flexible** (working modes/backups): Xasu can operate in different modes, including an online mode (connected to an LRS), offline mode (generating a local log file in xAPI or CSV), in fallback mode (hybrid online and local depending on connectivity), and in backup mode (generating and/or sending a single file with all traces at the end).
 
@@ -27,32 +27,13 @@ Please find the full Xasu documentation in the Wiki section of this project.
 
 # Quick Start Guide
 
-Xasu requires at least **Unity 2019.4 (LTS)**.
-
-## Installation
-
-Xasu can be downloaded through the Unity Package Manager using the [repository link](https://github.com/e-ucm/xasu.git) of this project.
-
-To add it to your proyect:
-* Go to ``Window > Package Manager``
-* Press the "+" icon.
-* Select ``Add package from git...``.
-* Insert ```https://github.com/e-ucm/xasu.git``` 
-* Press "Add".
-
-If you want to manually include Xasu into your project (for example, by downloading the repository as a .zip), make sure you install also the NewtonSoft.JSON library using the Unity Package Manager.
+Check [this](./DotNet/QUICKSTART.md) for standalone .NET projects or [this](./Unity/QUICKSTART.md) for Unity projects.
 
 ## Setting up the configuration file
 
-The Xasu configuration file contains settings for overall system tuning, LRS endpoint location, authorization protocols and options, and working mode selection. The tracker configuration can be provided either using the `StreamingAssets` folder (recommended) or via scripting. We recommend using the `StreamingAssets` folder to allow configuration to be changed after the game is exported, allowing simpler adaptation of the game to different scenarios without having to recompila the whole game.
+The Xasu configuration file contains settings for overall system tuning, LRS endpoint location, authorization protocols and options, and working mode selection. 
 
 ### Minimal "tracker_config.json"
-
-The configuration file must be placed in:
-
-```path
-Assets/StreamingAssets/tracker_config.json
-```
 
 The following configuration file represents the minimal tracker configuration required to send traces to an LRS using basic authentication. 
 
@@ -92,27 +73,7 @@ Please visit our Wiki to get more details on using cmi5 in Xasu.
 
 ## Adding Xasu to your game
 
-Once Xasu is installed, to add Xasu to your game you just have to create a new GameObject in Unity and include the Xasu component.
-
-If you want to know more about how Xasu works, please check the Wiki:
-* Working with Xasu: https://github.com/e-ucm/xasu/wiki/Working-with-Xasu
-
-### Initializing Xasu
-
-When Xasu is added to your scene it won't initialize and connect by default. 
-
-To initialize it automatically, please check the "Auto Start" property in the object inspector.
-You can also check "Enable Debug Log" to display debug logs in Unity console.
-
-![alt text](./Unity/xasu-parameters.png)
-
-You can also initialize Xasu manually by using the ```Init``` method:
-```cs
-    await Xasu.Instance.Init();
-```
-
-If you want to learn more about how to initialize Xasu please visit our Wiki.
-* Initializing Xasu: https://github.com/e-ucm/xasu/wiki/Working-with-Xasu#initialization
+To add and initialize Xasu in your game, check [this](./DotNet/QUICKSTART.md#adding-xasu-to-your-game) for standalone .NET projects or [this](./Unity/QUICKSTART.md#adding-xasu-to-your-game) for Unity projects.
 
 ## Sending your first xAPI statement
 
@@ -124,7 +85,7 @@ There are two possibilities when sending traces:
 To use any of the APIs make sure you include the appropiate namespace in your .cs files.
 
 ```cs
-using UnityTracker.HighLevel;
+using Xasu.HighLevel;
 ```
 
 Here's an example of how can you send one trace using Xasu High-Level API:
@@ -148,20 +109,8 @@ Before the game is closed, Xasu has to be finalized manually so its processors (
     {
         Debug.Log("Finalization progress: " + p);
     };
-    await Xasu.XasuTracker.Instance.Finalize(progress);
-    Debug.Log("Tracker finalized, game is now ready to close...");
-```
-
-or 
-
-```cs
-    using System.Collections;
-    var progress = new Progress<float>();
-    progress.ProgressChanged += (_, p) =>
-    {
-        Debug.Log("Finalization progress: " + p);
-    };
-    await FindObjectOfType<XasuTracker>().Finalize(progress);
+    
+    await Xasu.XasuTracker.Instance.Finalize(progress); // or await FindObjectOfType<XasuTracker>().Finalize(progress); 
     Debug.Log("Tracker finalized, game is now ready to close...");
 ```
 

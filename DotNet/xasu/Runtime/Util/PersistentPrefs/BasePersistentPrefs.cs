@@ -26,8 +26,18 @@ namespace Xasu.Util
             AppDomain.CurrentDomain.ProcessExit += (s, e) => Save();
             Console.CancelKeyPress += (s, e) => Save();
 
-            _filePath = filePath == null ? ApplicationSettings.PersistentDataPath : filePath;
-            _fileName = filePath == null ? DEFAULT_FILE_NAME : fileName;
+            if (string.IsNullOrEmpty(filePath))
+            {
+                filePath = ApplicationSettings.PersistentDataPath;
+            }
+            _filePath = filePath;
+
+            if (string.IsNullOrEmpty(fileName))
+            {
+                fileName = DEFAULT_FILE_NAME;
+            }
+            _fileName = fileName;
+
             _fullPath = Path.Combine(_filePath, _fileName);
             _fullPath = Path.GetFullPath(_fullPath);
 

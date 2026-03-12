@@ -76,11 +76,11 @@ namespace Xasu.Config
             AuthParameters = new Dictionary<string, string>();
             BackupAuthParameters = new Dictionary<string, string>();
 
-            if (filePath == null)
+            if (string.IsNullOrEmpty(filePath))
             {
                 filePath = ApplicationSettings.TrackerConfigPath;
             }
-            if (fileName == null)
+            if (string.IsNullOrEmpty(fileName))
             {
                 fileName = DEFAULT_TRACKER_CONFIG_FILE_NAME;
             }

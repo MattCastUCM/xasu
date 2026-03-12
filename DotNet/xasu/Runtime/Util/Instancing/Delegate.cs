@@ -1,6 +1,4 @@
-﻿using System.Reflection;
-
-namespace Xasu.Util
+﻿namespace Xasu.Util
 {
     /// <summary>
     /// Base class for delegate classes for functionalities whose instancing can be replaced in a factory method
