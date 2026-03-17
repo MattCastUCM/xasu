@@ -2,7 +2,6 @@
 using System.Threading.Tasks;
 using Xasu;
 using Xasu.HighLevel;
-using Xasu.Util;
 
 public static class TestTrackerCalls
 {

@@ -4,6 +4,7 @@ using Xasu;
 using Xasu.Auth;
 using Xasu.CMI5;
 using Xasu.Config;
+using Xasu.Requests;
 using Xasu.Util;
 
 [DefaultExecutionOrder(0)]
@@ -12,8 +13,9 @@ public class XasuUnityComponent : MonoBehaviour
     [SerializeField]
     float processingLoopTime = 1;   // In Seconds
     [SerializeField]
-    bool enableDebugLogging = false, 
-         autoStart = false,
+    bool autoStart = false,
+         enableDebugLogging = false,
+         canLoadConfigFromURL = false,
          sendRequestsInBackground = false;
 
     /// <summary>
@@ -76,6 +78,10 @@ public class XasuUnityComponent : MonoBehaviour
         {
             return UnityTracker.Instance;
         };
+        Factories.factories[Factories.Id.REQUEST_HANDLER] = () =>
+        {
+            return new UnityRequestHandler(sendRequestsInBackground);
+        };
         Factories.factories[Factories.Id.TRACKER_CONFIG] = () =>
         {
             return new UnityTrackerConfig();
@@ -100,13 +106,12 @@ public class XasuUnityComponent : MonoBehaviour
 
         XasuTracker.ProcessingLoopTime = processingLoopTime;
         XasuTracker.EnableDebugLogging = enableDebugLogging;
-        UnityTracker.Instance.SendRequestsInBackground = sendRequestsInBackground;
+        XasuTracker.CanLoadConfigFromURL = canLoadConfigFromURL;
 
 
         if (autoStart)
         {
-            //await XasuTracker.Init();
-            await TestTrackerCalls.Init();
+            await XasuTracker.Init();
         }
     }
 }

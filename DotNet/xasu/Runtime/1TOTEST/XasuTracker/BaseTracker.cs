@@ -151,6 +151,22 @@ namespace Xasu
             return trackerConfig;
         }
 
+        protected virtual IHttpRequestHandler TryCreateRequestHandler()
+        {
+            IHttpRequestHandler requestHandler = null;
+
+            try
+            {
+                requestHandler = (IHttpRequestHandler)Factories.factories[Factories.Id.REQUEST_HANDLER]();
+            }
+            catch
+            {
+                requestHandler = new HttpRequestHandler();
+            }
+
+            return requestHandler;
+        }
+
         public virtual async Task InitOffline(string user, string mail)
         {
             TrackerConfig trackerConfig = await TryLoadConfig();
@@ -192,7 +208,7 @@ namespace Xasu
 
                 if (requestHandler == null)
                 {
-                    requestHandler = new HttpRequestHandler();
+                    requestHandler = TryCreateRequestHandler();
                 }
 
                 var processors = new List<IProcessor>();

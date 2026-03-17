@@ -5,12 +5,16 @@ using Xasu.Auth.Protocols.OAuth2;
 using Xasu.Auth.Utils;
 using Xasu.CMI5;
 using Xasu.Config;
+using Xasu.Requests;
 
 namespace Xasu.Util
 {
     public static class Factories
     {
-        public enum Id { NONE, APPLICATION_SETTINGS, PERSISTENT_PREFS, DEBUG_LOGGER, XASU_TRACKER, TRACKER_CONFIG, PKCE, AUTH_FACTORY, AUTH_UTILITY, CMI5_UTILITY }
+        public enum Id { 
+            NONE, APPLICATION_SETTINGS, PERSISTENT_PREFS, DEBUG_LOGGER, XASU_TRACKER, 
+            REQUEST_HANDLER, TRACKER_CONFIG, PKCE, AUTH_FACTORY, AUTH_UTILITY, CMI5_UTILITY 
+        }
         public static Dictionary<Id, Func<object>> factories = new Dictionary<Id, Func<object>>()
         {
             { Id.APPLICATION_SETTINGS, () => { return new BaseApplicationSettings(); } },
@@ -19,6 +23,7 @@ namespace Xasu.Util
 
             // DON'T RETURN NEW FOR SINGLETONS
             { Id.XASU_TRACKER, () => { return BaseTracker.Instance; } },
+            { Id.REQUEST_HANDLER, () => { return new HttpRequestHandler(); } },
             { Id.TRACKER_CONFIG, () => { return new TrackerConfig(); } },
 
             { Id.PKCE, () => { return new BasePKCE(); }},

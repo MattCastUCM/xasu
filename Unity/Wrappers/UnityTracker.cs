@@ -1,38 +1,12 @@
 ﻿using System;
 using System.Threading.Tasks;
 using UnityEngine;
-using Xasu.Auth.Protocols;
-using Xasu.Config;
 using Xasu.Processors;
-using Xasu.Requests;
-using Xasu.Util;
-
 namespace Xasu
 {
     public class UnityTracker : BaseTrackerTemplate<UnityTracker>
     {
-        protected bool _sendRequestsInBackground;
-        public virtual bool SendRequestsInBackground
-        {
-            get { return _sendRequestsInBackground; }
-            set { _sendRequestsInBackground = value; }
-        }
-
         public UnityTracker() : base() { }
-
-        public override async Task Init(TrackerConfig trackerConfig = null, IHttpRequestHandler requestHandler = null, IAuthProtocol onlineAuthorization = null, IAuthProtocol backupAuthorization = null)
-        {
-            try
-            {
-                if (requestHandler == null)
-                {
-                    requestHandler = new UnityRequestHandler(SendRequestsInBackground);
-                }
-
-                await base.Init(trackerConfig, requestHandler, onlineAuthorization, backupAuthorization);
-            }
-            catch { }
-        }
 
         protected override async Task ProcessingLoop()
         {
