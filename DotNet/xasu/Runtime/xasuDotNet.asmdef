@@ -1,14 +1,10 @@
 {
-    "name": "xasu-editor",
-    "rootNamespace": "",
+    "name": "xasuDotNet",
+    "rootNamespace": "xasu",
     "references": [
-        "GUID:097e7070f4b4478429fd058258f42fcc",
-        "GUID:65d7366cede66ab4492d0a986c0bb23f",
-        "GUID:65e765899ebae6849ac0f870dd4a24f0"
+        "GUID:7a1512ecf79bccc49a1db7adc89901f1"
     ],
-    "includePlatforms": [
-        "Editor"
-    ],
+    "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
     "overrideReferences": false,

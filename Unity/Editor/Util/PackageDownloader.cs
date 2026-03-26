@@ -50,7 +50,7 @@ public class PackageDownloader
 
         try
         {
-            var request = new MyHttpRequest() { url = url, method = "GET" };
+            var request = new HttpRequest() { url = url, method = "GET" };
             var response = await requestHandler.SendRequest(request);
 
             var downloadFileName = name.Replace(" ", "").Trim() + ".zip";

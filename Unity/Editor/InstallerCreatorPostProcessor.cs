@@ -11,6 +11,7 @@ using UnityEngine;
 using WixSharp;
 using WixSharp.CommonTasks;
 using Xasu.Config;
+using Xasu.Util;
 
 public class InstallerCreatorPostProcessor : IPreprocessBuildWithReport
 {
@@ -105,7 +106,15 @@ public class InstallerCreatorPostProcessor : IPreprocessBuildWithReport
     {
         try
         {
-            trackerConfig = TrackerConfigLoader.LoadLocalAsync().GetAwaiter().GetResult();
+            trackerConfig = null;
+            try
+            {
+                trackerConfig = (TrackerConfig)Factories.factories[Factories.Id.TRACKER_CONFIG]();
+            }
+            catch
+            {
+                trackerConfig = new TrackerConfig();
+            }
         }
         catch (FileNotFoundException)
         {

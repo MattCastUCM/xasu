@@ -11,7 +11,7 @@ using Xasu.Util;
 
 namespace Xasu.Requests
 {
-    internal class UnityRequestHandler : HttpRequestHandler
+    public class UnityRequestHandler : HttpRequestHandler
     {
         static bool _sendRequestsInBackground = false;
 
