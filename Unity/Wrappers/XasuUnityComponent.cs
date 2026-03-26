@@ -1,4 +1,5 @@
 using Assets.XasuUnity.Util;
+using System.Threading.Tasks;
 using UnityEngine;
 using Xasu;
 using Xasu.Auth;
@@ -7,7 +8,6 @@ using Xasu.Config;
 using Xasu.Requests;
 using Xasu.Util;
 
-[DefaultExecutionOrder(0)]
 public class XasuUnityComponent : MonoBehaviour
 {
     [SerializeField]
@@ -17,6 +17,12 @@ public class XasuUnityComponent : MonoBehaviour
          enableDebugLogging = false,
          canLoadConfigFromURL = false,
          sendRequestsInBackground = false;
+
+    Task initTask = null;
+    public Task InitTask
+    {
+        get { return initTask; }
+    }
 
     /// <summary>
     /// The instance.
@@ -111,7 +117,8 @@ public class XasuUnityComponent : MonoBehaviour
 
         if (autoStart)
         {
-            await XasuTracker.Init();
+            initTask = XasuTracker.Init();
+            await initTask;
         }
     }
 }

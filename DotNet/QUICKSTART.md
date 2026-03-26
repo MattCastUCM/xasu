@@ -1,10 +1,9 @@
 ## Installation
-Xasu is a library developed in .NET Standard 2.0. You can check the .NET implementations that support it [here](https://learn.microsoft.com/en-us/dotnet/standard/net-standard?tabs=net-standard-2-0).
+Xasu is a library developed in .NET Standard 2.0, designed to work in Windows, Linux and macOS, but it can be extended to support other platform as long as the .NET implementation supports .NET Standard 2.0. You can check the .NET implementations that support it [here](https://learn.microsoft.com/en-us/dotnet/standard/net-standard?tabs=net-standard-2-0).
 
-Xasu can be downloaded through the Unity Package Manager using the [repository link](https://github.com/e-ucm/xasu.git) of this project.
 
 <!-- TODO: Build the dlls and provide them directly? -->
-To add it to your proyect, just add the ```xasu.csproj``` to your solution and add it as a dependency in the project where you want to use it.
+To add it to your proyect, just download the [xasu project folder](../DotNet/xasu/), add the ```xasu.csproj``` to your solution, and add it as a dependency in the project where you want to use it.
 
 ## Application configuration 
 
